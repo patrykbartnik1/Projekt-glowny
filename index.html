@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Budżet Domowy</title>
+</head>
+<body>
+    <h1>Lista Transakcji</h1>
+    <a href="/add">Dodaj transakcję</a>
+    <ul>
+        {% for t in transactions %}
+            <li>{{ t.type }} | {{ t.category }} | {{ t.amount }} PLN | {{ t.description }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
