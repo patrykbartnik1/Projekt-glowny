@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Budżet Domowy</title>
+    <title>Budzet Domowy</title>
 </head>
 <body>
     <h1>Lista Transakcji</h1>
-    <a href="/add">Dodaj transakcję</a>
+    <a href="/add">Dodaj transakcje</a>
     <ul>
         {% for t in transactions %}
             <li>{{ t.type }} | {{ t.category }} | {{ t.amount }} PLN | {{ t.description }}</li>
