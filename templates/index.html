@@ -5,16 +5,15 @@
 </head>
 <body>
     <h1>Lista Transakcji</h1>
-    <a href="/add">Dodaj transakcję</a><br>
-    {% if current_user.is_authenticated %}
-        <p>Zalogowany jako: {{ current_user.username }}</p>
-        <a href="/logout">Wyloguj</a>
-    {% else %}
-        <a href="/login">Zaloguj</a> | <a href="/register">Zarejestruj</a>
-    {% endif %}
+    <p>Saldo: {{ balance }} PLN</p>
+    <a href="/add">Dodaj transakcję</a>
     <ul>
         {% for t in transactions %}
-            <li>{{ t.type }} | {{ t.category }} | {{ t.amount }} PLN | {{ t.description }}</li>
+            <li>
+                {{ t.type }} | {{ t.category }} | {{ t.amount }} PLN | {{ t.description }} | Dowód: {{ t.receipt }}
+                <a href="/edit/{{ t.id }}">Edytuj</a> |
+                <a href="/delete/{{ t.id }}">Usuń</a>
+            </li>
         {% endfor %}
     </ul>
 </body>

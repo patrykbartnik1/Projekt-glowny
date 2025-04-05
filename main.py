@@ -1,21 +1,10 @@
 from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///budget.db'
 app.config['SECRET_KEY'] = 'tajny_klucz_do_formularzy'
 db = SQLAlchemy(app)
-
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -23,61 +12,51 @@ class Transaction(db.Model):
     category = db.Column(db.String(50))
     amount = db.Column(db.Float)
     description = db.Column(db.String(200))
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+    receipt = db.Column(db.String(200))  # Dowód zakupu
 
 @app.route('/')
-@login_required
 def index():
     transactions = Transaction.query.all()
-    return render_template('index.html', transactions=transactions)
+    balance = sum([t.amount if t.type == 'income' else -t.amount for t in transactions])
+    return render_template('index.html', transactions=transactions, balance=balance)
 
 @app.route('/add', methods=['GET', 'POST'])
-@login_required
 def add():
     if request.method == 'POST':
         t_type = request.form['type']
         category = request.form['category']
         amount = float(request.form['amount'])
         description = request.form['description']
-        new_transaction = Transaction(type=t_type, category=category, amount=amount, description=description)
+        receipt = request.form['receipt']
+        new_transaction = Transaction(
+            type=t_type, category=category,
+            amount=amount, description=description,
+            receipt=receipt
+        )
         db.session.add(new_transaction)
         db.session.commit()
         return redirect('/')
     return render_template('add.html')
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit(id):
+    transaction = Transaction.query.get_or_404(id)
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        hashed_password = generate_password_hash(password, method='sha256')
-        new_user = User(username=username, password=hashed_password)
-        db.session.add(new_user)
+        transaction.type = request.form['type']
+        transaction.category = request.form['category']
+        transaction.amount = float(request.form['amount'])
+        transaction.description = request.form['description']
+        transaction.receipt = request.form['receipt']
         db.session.commit()
-        return redirect('/login')
-    return render_template('register.html')
+        return redirect('/')
+    return render_template('edit.html', transaction=transaction)
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
-            login_user(user)
-            return redirect('/')
-        else:
-            return 'Nieprawidłowy login lub hasło'
-    return render_template('login.html')
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect('/login')
+@app.route('/delete/<int:id>')
+def delete(id):
+    transaction = Transaction.query.get_or_404(id)
+    db.session.delete(transaction)
+    db.session.commit()
+    return redirect('/')
 
 if __name__ == '__main__':
     db.create_all()
