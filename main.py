@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///budget.db'
 app.config['SECRET_KEY'] = 'tajny_klucz_do_formularzy'
 db = SQLAlchemy(app)
+
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -13,6 +15,8 @@ class Transaction(db.Model):
     amount = db.Column(db.Float)
     description = db.Column(db.String(200))
     receipt = db.Column(db.String(200))  # Dowód zakupu
+
+
 
 @app.route('/')
 def index():
@@ -23,15 +27,12 @@ def index():
 @app.route('/add', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
-        t_type = request.form['type']
-        category = request.form['category']
-        amount = float(request.form['amount'])
-        description = request.form['description']
-        receipt = request.form['receipt']
         new_transaction = Transaction(
-            type=t_type, category=category,
-            amount=amount, description=description,
-            receipt=receipt
+            type=request.form['type'], 
+            category=request.form['category'],
+            amount=float(request.form['amount']), 
+            description=request.form['description'],
+            receipt=request.form['receipt']
         )
         db.session.add(new_transaction)
         db.session.commit()
@@ -57,6 +58,7 @@ def delete(id):
     db.session.delete(transaction)
     db.session.commit()
     return redirect('/')
+
 
 if __name__ == '__main__':
     db.create_all()
